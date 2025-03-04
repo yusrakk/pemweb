@@ -153,6 +153,10 @@ window.addEventListener("scroll", animateSkills)
 document.getElementById("contact-form").addEventListener("submit", function(event) {
   event.preventDefault(); // Mencegah submit normal
 
+  let submitButton = document.querySelector("#contact-form button");
+  submitButton.disabled = true; // Menonaktifkan tombol saat loading
+  submitButton.innerHTML = `Mengirim... <span class="spinner"></span>`;
+
   // Mengambil data input
   const formData = new FormData(this);
 
@@ -171,6 +175,10 @@ document.getElementById("contact-form").addEventListener("submit", function(even
   .catch(error => {
       showPopup("Terjadi kesalahan. Coba lagi ❌");
       console.error("Error:", error);
+  })
+  .finally(() => {
+      submitButton.disabled = false; // Aktifkan kembali tombol setelah selesai
+      submitButton.innerHTML = `Kirim Pesan`;
   });
 });
 
@@ -188,4 +196,44 @@ function closePopup(button) {
   button.parentElement.style.display = "none";
   window.location.href = "#hero"; // Kembali ke section hero
 }
+
+$(document).ready(function () {
+    $("#contact-form").submit(function (e) {
+        e.preventDefault(); // Mencegah pengiriman form default
+
+        let name = $("input[name='name']").val().trim();
+        let email = $("input[name='email']").val().trim();
+        let message = $("textarea[name='message']").val().trim();
+
+        let phone = prompt("Masukkan nomor handphone:"); // Tambah input manual karena belum ada di form
+        let phoneRegex = /^[0-9]{10,15}$/; // Validasi nomor HP 10-15 digit angka
+
+        if (name === "" || email === "" || message === "" || phone === "") {
+            showPopup("Semua kolom wajib diisi!");
+            return;
+        }
+
+        if (!/^\S+@\S+\.\S+$/.test(email)) {
+            showPopup("Format email tidak valid!");
+            return;
+        }
+
+        if (!phoneRegex.test(phone)) {
+            showPopup("Nomor HP harus terdiri dari 10-15 digit angka!");
+            return;
+        }
+
+        if (name.length > 50) {
+            showPopup("Nama tidak boleh lebih dari 50 karakter!");
+            return;
+        }
+
+        if (message.length > 200) {
+            showPopup("Pesan tidak boleh lebih dari 200 karakter!");
+            return;
+        }
+
+        showPopup("Pesan berhasil dikirim!");
+    });
+});
 

@@ -864,3 +864,18 @@ input, textarea {
   cursor: pointer;
 }
 
+.spinner {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  margin-left: 8px;
+  border: 2px solid white;
+  border-radius: 50%;
+  border-top: 2px solid transparent;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
