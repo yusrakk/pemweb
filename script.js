@@ -73,25 +73,77 @@ if (prevBtn && nextBtn) {
 }
 
 // Form submission
-const contactForm = document.getElementById("contact-form")
+const contactForm = document.getElementById("contact-form");
 if (contactForm) {
-  contactForm.addEventListener("submit", (e) => {
-    e.preventDefault()
+    contactForm.addEventListener("submit", function(event) {
+        event.preventDefault(); // Mencegah submit normal HTML
 
-    const name = document.getElementById("name").value
-    const email = document.getElementById("email").value
-    const message = document.getElementById("message").value
+        let submitButton = document.querySelector("#contact-form button");
+        submitButton.disabled = true; // Menonaktifkan tombol saat loading
+        submitButton.innerHTML = `Mengirim... <span class="spinner"></span>`;
 
-    // Here you would typically send the form data to a server
-    // For now, we'll just log it to the console
-    console.log("Form submitted:", { name, email, message })
+        // Mengambil data input
+        const formData = new FormData(this);
+        const formDataLocal = new FormData(this); // Membuat instance FormData lain untuk pengiriman lokal
 
-    // Show success message
-    alert("Pesan Anda telah terkirim! Terima kasih telah menghubungi saya.")
+        // **Bagian 1: Kirim data ke FormSubmit (seperti sebelumnya)**
+        fetch("https://formsubmit.co/yusarosdiana7@gmail.com", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                showPopup("Gagal mengirim pesan melalui email. Coba lagi ❌");
+            }
+            // Kita tidak menampilkan pesan sukses di sini dulu,
+            // karena kita akan mencoba menyimpan ke database juga.
+        })
+        .catch(error => {
+            showPopup("Terjadi kesalahan saat mengirim email. Coba lagi ❌");
+            console.error("Error mengirim email:", error);
+        })
+        .finally(() => {
+            // Tidak menonaktifkan/mengubah tombol di sini dulu,
+            // karena kita masih akan mencoba menyimpan ke database.
+        });
 
-    // Reset form
-    contactForm.reset()
-  })
+        // **Bagian 2: Kirim data ke server lokal untuk disimpan ke database**
+        fetch("kirimpesan.php", { // Ubah URL ke file PHP lokal Anda
+            method: "POST",
+            body: formDataLocal // Gunakan instance FormData yang berbeda
+        })
+        .then(response => {
+            if (response.ok) {
+                showPopup("Pesan berhasil dikirim dan disimpan! ✅"); // Tampilkan pesan sukses jika keduanya berhasil
+            } else {
+                showPopup("Pesan berhasil dikirim melalui email, tetapi gagal disimpan. ⚠️"); // Beri tahu jika email berhasil tapi penyimpanan gagal
+            }
+        })
+        .catch(error => {
+            showPopup("Terjadi kesalahan saat menyimpan pesan. Coba lagi ❌"); // Tampilkan pesan error jika penyimpanan gagal
+            console.error("Error menyimpan pesan:", error);
+        })
+        .finally(() => {
+            submitButton.disabled = false; // Aktifkan kembali tombol setelah mencoba keduanya
+            submitButton.innerHTML = `Kirim Pesan`;
+            contactForm.reset(); // Reset formulir setelah selesai (baik berhasil atau gagal)
+        });
+    });
+}
+
+// Fungsi untuk menampilkan popup
+function showPopup(message) {
+    let popup = document.createElement("div");
+    popup.classList.add("popup");
+    popup.innerHTML = `<p>${message}</p><button onclick="closePopup(this)">OK</button>`;
+    document.body.appendChild(popup);
+    popup.style.display = "block";
+}
+
+// Fungsi untuk menutup popup dan kembali ke hero
+function closePopup(button) {
+    button.parentElement.style.display = "none";
+    window.location.href = "#hero"; // Kembali ke section hero
 }
 
 // Smooth scrolling for anchor links
@@ -150,62 +202,15 @@ window.addEventListener("load", animateSkills)
 // Animate on scroll
 window.addEventListener("scroll", animateSkills)
 
-document.getElementById("contact-form").addEventListener("submit", function(event) {
-  event.preventDefault(); // Mencegah submit normal
-
-  let submitButton = document.querySelector("#contact-form button");
-  submitButton.disabled = true; // Menonaktifkan tombol saat loading
-  submitButton.innerHTML = `Mengirim... <span class="spinner"></span>`;
-
-  // Mengambil data input
-  const formData = new FormData(this);
-
-  // Kirim data ke FormSubmit dengan Fetch API
-  fetch("https://formsubmit.co/yusarosdiana7@gmail.com", {
-      method: "POST",
-      body: formData
-  })
-  .then(response => {
-      if (response.ok) {
-          showPopup("Pesan berhasil dikirim! ✅");
-      } else {
-          showPopup("Gagal mengirim pesan. Coba lagi ❌");
-      }
-  })
-  .catch(error => {
-      showPopup("Terjadi kesalahan. Coba lagi ❌");
-      console.error("Error:", error);
-  })
-  .finally(() => {
-      submitButton.disabled = false; // Aktifkan kembali tombol setelah selesai
-      submitButton.innerHTML = `Kirim Pesan`;
-  });
-});
-
-// Fungsi untuk menampilkan popup
-function showPopup(message) {
-  let popup = document.createElement("div");
-  popup.classList.add("popup");
-  popup.innerHTML = `<p>${message}</p><button onclick="closePopup(this)">OK</button>`;
-  document.body.appendChild(popup);
-  popup.style.display = "block";
-}
-
-// Fungsi untuk menutup popup dan kembali ke hero
-function closePopup(button) {
-  button.parentElement.style.display = "none";
-  window.location.href = "#hero"; // Kembali ke section hero
-}
-
 $(document).ready(function () {
     $("#contact-form").submit(function (e) {
-        e.preventDefault(); // Mencegah pengiriman form default
+        e.preventDefault(); // Mencegah pengiriman form default (lagi, karena sudah dicegah di atas)
 
         let name = $("input[name='name']").val().trim();
         let email = $("input[name='email']").val().trim();
         let message = $("textarea[name='message']").val().trim();
 
-        let phone = prompt("Masukkan nomor handphone:"); // Tambah input manual karena belum ada di form
+        let phone = prompt("Masukkan nomor handphone:"); // Ini akan muncul setelah pengiriman Fetch
         let phoneRegex = /^[0-9]{10,15}$/; // Validasi nomor HP 10-15 digit angka
 
         if (name === "" || email === "" || message === "" || phone === "") {
@@ -233,7 +238,6 @@ $(document).ready(function () {
             return;
         }
 
-        showPopup("Pesan berhasil dikirim!");
+        // showPopup("Pesan berhasil dikirim!"); // Ini mungkin duplikat dengan pesan dari Fetch
     });
 });
-
